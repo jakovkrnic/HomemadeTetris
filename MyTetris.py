@@ -5,7 +5,8 @@ Created on Tue Oct  3 20:04:22 2023
 @author: jakov
 """
 
-from tkinter import Tk, Frame
+from tkinter import Tk, Frame, Label, Canvas
+from PIL import Image, ImageTk
 import random
 from Pieces import LongPiece, LPiece, SquigglyLPiece, SquarePiece, TPiece, ReverseLPiece, SquigglyReverseLPiece
 from time import sleep
@@ -14,15 +15,13 @@ from time import sleep
 class Tetris():
     
     def __init__(self):
-        
         self.root = Tk()
         
         self.ws = int(self.root.winfo_screenwidth()) # width of the screen
-        hs = self.root.winfo_screenheight() # height of the screen
-
         
         self.game_speed = 100
         self.was_init_placed = False
+        self.first_piece_placed = False
         
         self.init_pieces()
         
@@ -41,15 +40,21 @@ class Tetris():
                                      height=2*self.main_width, 
                                      background="light blue")
         
-        self.root_geometry = str(self.main_width) + "x" + str(2*self.main_width)
+        self.root_geometry = f"{str(int(1.5*self.main_width))}x{str(2*self.main_width)}"
         self.root.geometry(self.root_geometry + "+580+0")
         
         self.main_game_frame.grid_propagate(False)
-        self.main_game_frame.pack()
+        self.main_game_frame.pack(side="left")
         self.root.bind("<Key>", self.key_pressed)
-    
         
+        self.main_info_frame = Frame(self.root, width=self.main_width/2, 
+                                     height=2*self.main_width, 
+                                     background="light blue")
+        self.main_info_frame.pack(side="right")
+
         self.main_list = self.init_main_list()
+        
+        self.label = Label(self.main_info_frame)
     
         self.init_main_placement()
 
@@ -128,7 +133,16 @@ class Tetris():
             5: T piece
             6: Square
         """
-        piece = random.randint(0,5)
+        self.label.destroy()
+        
+        if not self.first_piece_placed:
+            piece = random.randint(0,6)
+            self.first_piece_placed = True
+        else:
+            piece = self.piece2
+        self.piece2 = random.randint(0,6)
+
+
         if piece == 0:
             self.piece = self.long_piece
         elif piece == 1:
@@ -143,8 +157,30 @@ class Tetris():
             self.piece = self.t_piece
         else:
             self.piece = self.square_piece
+            
+            
+        if self.piece2 == 0:
+            self.image = Image.open("LongPiece.png")
+        elif self.piece2 == 1:
+            self.image = Image.open("LPiece.png")
+        elif self.piece2 == 2:
+            self.image = Image.open("SquigglyLPiece.png")
+        elif self.piece2 == 3:
+            self.image = Image.open("ReverseLPiece.png")
+        elif self.piece2 == 4:
+            self.image = Image.open("ReverseSquigglyLPiece.png")
+        elif self.piece2 == 5:
+            self.image = Image.open("TPiece.png")
+        else:
+            self.image = Image.open("SquarePiece.png")
         
-    
+        photo = ImageTk.PhotoImage(self.image.resize((196, 98), Image.ANTIALIAS))
+
+        self.label = Label(self.main_info_frame, image=photo, bg='green')
+        self.label.image = photo
+        self.label.pack()
+        self.image.close()
+        
     
     def init_main_placement(self):
         self.place_random_piece()
@@ -172,10 +208,8 @@ class Tetris():
     def reset_game(self):
         self.piece.reset()
         self.main_list = self.init_main_list()
-        print(self.main_list)
         self.update_cleared_board()
         self.init_main_placement()
-        
     
         
     def main_loop(self):
